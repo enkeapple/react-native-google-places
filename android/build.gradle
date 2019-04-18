@@ -10,7 +10,6 @@ android {
     defaultConfig {
         minSdkVersion safeExtGet('minSdkVersion', 16)
         targetSdkVersion safeExtGet('targetSdkVersion', 28)
-        resValue "string", "places_api_key", rootProject.findProperty("RNGP_ANDROID_API_KEY") ?: "INSERT_KEY_HERE"
     }
 
     compileOptions {
