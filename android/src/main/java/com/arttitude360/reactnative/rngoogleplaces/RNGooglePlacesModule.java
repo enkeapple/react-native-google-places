@@ -75,7 +75,13 @@ public class RNGooglePlacesModule extends ReactContextBaseJavaModule implements 
     public RNGooglePlacesModule(ReactApplicationContext reactContext) {
         super(reactContext);
 
-        String apiKey = reactContext.getApplicationContext().getString(R.string.places_api_key);
+        int resId = reactContext.getResources().getIdentifier("places_api_key", "string", reactContext.getPackageName());
+        String apiKey = "";
+        if (resId != 0) {
+            apiKey = reactContext.getString(resId);
+        } else {
+            Log.e(TAG, "Can't find string resource 'places_api_key', google places api will not work");
+        }
 
         // Setup Places Client
         if (!Places.isInitialized() && !apiKey.equals("")) {
