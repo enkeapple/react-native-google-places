@@ -1,40 +1,25 @@
 apply plugin: 'com.android.library'
 
-def DEFAULT_COMPILE_SDK_VERSION             = 28
-def DEFAULT_TARGET_SDK_VERSION              = 28
+def safeExtGet(prop, fallback) {
+    return rootProject.ext.hasProperty(prop) ? rootProject.ext.get(prop) : fallback
+}
 
 android {
-    compileSdkVersion rootProject.hasProperty('compileSdkVersion') ? rootProject.compileSdkVersion : DEFAULT_COMPILE_SDK_VERSION
+    compileSdkVersion safeExtGet('compileSdkVersion', 28)
 
     defaultConfig {
-        minSdkVersion 21
-        targetSdkVersion rootProject.hasProperty('targetSdkVersion') ? rootProject.targetSdkVersion : DEFAULT_TARGET_SDK_VERSION
-        resValue "string", "places_api_key", (System.env.RNGP_ANDROID_API_KEY ? "$System.env.RNGP_ANDROID_API_KEY" : (rootProject.findProperty("RNGP_ANDROID_API_KEY") ?: "INSERT_KEY_HERE"))
+        minSdkVersion safeExtGet('minSdkVersion', 16)
+        targetSdkVersion safeExtGet('targetSdkVersion', 28)
+        resValue "string", "places_api_key", rootProject.findProperty("RNGP_ANDROID_API_KEY") ?: "INSERT_KEY_HERE"
     }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
-
-    packagingOptions {
-        exclude 'META-INF/LICENSE'
-        exclude 'META-INF/DEPENDENCIES.txt'
-        exclude 'META-INF/LICENSE.txt'
-        exclude 'META-INF/NOTICE.txt'
-        exclude 'META-INF/NOTICE'
-        exclude 'META-INF/DEPENDENCIES'
-        exclude 'META-INF/notice.txt'
-        exclude 'META-INF/license.txt'
-        exclude 'META-INF/dependencies.txt'
-        exclude 'META-INF/LGPL2.1'
-    }
-
-    lintOptions {
-        disable 'InvalidPackage'
-    }
 }
 
 dependencies {
-    compileOnly "com.facebook.react:react-native:+"
-    implementation 'com.google.android.libraries.places:places:1.0.0'
+    implementation "com.facebook.react:react-native:+"
+    implementation 'com.google.android.libraries.places:places:1.1.0'
 }
