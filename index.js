@@ -1,54 +1,55 @@
+import { NativeModules } from "react-native";
 
-import React from 'react'
+const RNGooglePlaces = NativeModules.RNGooglePlaces;
 
-import { NativeModules } from 'react-native'
+export default {
+  optionsDefaults: {
+    type: "",
+    country: "",
+    useOverlay: false,
+    initialQuery: "",
+    useSessionToken: true,
+    locationBias: {
+      latitudeSW: 0,
+      longitudeSW: 0,
+      latitudeNE: 0,
+      longitudeNE: 0
+    },
+    locationRestriction: {
+      latitudeSW: 0,
+      longitudeSW: 0,
+      latitudeNE: 0,
+      longitudeNE: 0
+    }
+  },
 
-const RNGooglePlacesNative = NativeModules.RNGooglePlaces
+  openAutocompleteModal(options, placeFields) {
+    const nativeOptions = Object.assign(
+      {},
+      RNGooglePlaces.optionsDefaults,
+      options
+    );
+    return RNGooglePlaces.openAutocompleteModal(
+      nativeOptions,
+      placeFields || []
+    );
+  },
 
-class RNGooglePlaces {
-	static optionsDefaults = {
-		type: '',
-		country: '',
-		useOverlay: false,
-		initialQuery: '',
-		useSessionToken: true,
-		locationBias: {
-			latitudeSW: 0,
-			longitudeSW: 0,
-			latitudeNE: 0,
-			longitudeNE: 0
-		},
-		locationRestriction: {
-			latitudeSW: 0,
-			longitudeSW: 0,
-			latitudeNE: 0,
-			longitudeNE: 0
-		}
-	}
+  getAutocompletePredictions(query, options = {}) {
+    return RNGooglePlaces.getAutocompletePredictions(query, {
+      ...RNGooglePlaces.optionsDefaults,
+      ...options
+    });
+  },
 
-	static placeFieldsDefaults = []
+  lookUpPlaceByID(placeID, placeFields = []) {
+    return RNGooglePlaces.lookUpPlaceByID(placeID, [
+      ...RNGooglePlaces.placeFieldsDefaults,
+      ...placeFields
+    ]);
+  },
 
-	openAutocompleteModal(options = {}, placeFields = []) {
-		return RNGooglePlacesNative.openAutocompleteModal({
-			...RNGooglePlaces.optionsDefaults,
-			...options
-		}, [...RNGooglePlaces.placeFieldsDefaults, ...placeFields])
-	}
-
-	getAutocompletePredictions(query, options = {}) {
-		return RNGooglePlacesNative.getAutocompletePredictions(query, {
-            ...RNGooglePlaces.optionsDefaults,
-			...options
-		})
-	}
-
-	lookUpPlaceByID(placeID, placeFields = []) {
-	    return RNGooglePlacesNative.lookUpPlaceByID(placeID, [...RNGooglePlaces.placeFieldsDefaults, ...placeFields])
-	}
-
-	getCurrentPlace(placeFields = []) {
-		return RNGooglePlacesNative.getCurrentPlace([...RNGooglePlaces.placeFieldsDefaults, ...placeFields])
-	}
-}
-
-export default new RNGooglePlaces()
+  getCurrentPlace(placeFields) {
+    return RNGooglePlaces.getCurrentPlace(placeFields || []);
+  }
+};
