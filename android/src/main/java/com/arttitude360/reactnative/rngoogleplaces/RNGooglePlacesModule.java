@@ -27,6 +27,7 @@ import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableNativeArray;
 import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.module.annotations.ReactModule;
 import com.facebook.react.uimanager.annotations.ReactProp;
 
 import com.google.android.gms.common.api.Status;
@@ -61,6 +62,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+@ReactModule(name="RNGooglePlaces")
 public class RNGooglePlacesModule extends ReactContextBaseJavaModule implements ActivityEventListener {
 
     private ReactApplicationContext reactContext;
@@ -122,12 +124,8 @@ public class RNGooglePlacesModule extends ReactContextBaseJavaModule implements 
         }
     }
 
-    /**
-     * Exposed React's methods
-     */
-
     @ReactMethod
-    public void openAutocompleteModal(ReadableMap options, ReadableArray fields, final Promise promise) {
+    public void openAutocompleteModal(ReadableMap options, ReadableArray fields, Promise promise) {
 
         if (!Places.isInitialized()) {
             promise.reject("E_API_KEY_ERROR", new Error("No API key defined in gradle.properties or errors initializing Places"));
@@ -142,50 +140,34 @@ public class RNGooglePlacesModule extends ReactContextBaseJavaModule implements 
         }
 
         this.pendingPromise = promise;
-        this.lastSelectedFields = new ArrayList<>();
-        String type = options.getString("type");
-        String country = options.getString("country");
-        country = country.isEmpty() ? null : country;
-        String initialQuery = options.getString("initialQuery");
-        boolean useOverlay = options.getBoolean("useOverlay");
-
-        ReadableMap locationBias = options.getMap("locationBias");
-        double biasToLatitudeSW = locationBias.getDouble("latitudeSW");
-        double biasToLongitudeSW = locationBias.getDouble("longitudeSW");
-        double biasToLatitudeNE = locationBias.getDouble("latitudeNE");
-        double biasToLongitudeNE = locationBias.getDouble("longitudeNE");
-
-        ReadableMap locationRestriction = options.getMap("locationRestriction");
-        double restrictToLatitudeSW = locationRestriction.getDouble("latitudeSW");
-        double restrictToLongitudeSW = locationRestriction.getDouble("longitudeSW");
-        double restrictToLatitudeNE = locationRestriction.getDouble("latitudeNE");
-        double restrictToLongitudeNE = locationRestriction.getDouble("longitudeNE");
-        
         this.lastSelectedFields = getPlaceFields(fields.toArrayList(), false);
-        Autocomplete.IntentBuilder autocompleteIntent = new Autocomplete.IntentBuilder(
-                useOverlay ? AutocompleteActivityMode.OVERLAY : AutocompleteActivityMode.FULLSCREEN, this.lastSelectedFields);
+        AutocompleteActivityMode mode = options.hasKey("useOverlay") && options.getBoolean("useOverlay") ? AutocompleteActivityMode.OVERLAY : AutocompleteActivityMode.FULLSCREEN;
+        Autocomplete.IntentBuilder autocompleteIntent = new Autocomplete.IntentBuilder(mode, this.lastSelectedFields);
 
-        if (biasToLatitudeSW != 0 && biasToLongitudeSW != 0 && biasToLatitudeNE != 0 && biasToLongitudeNE != 0) {
-            autocompleteIntent.setLocationBias(RectangularBounds.newInstance(
-                new LatLng(biasToLatitudeSW, biasToLongitudeSW),
-                new LatLng(biasToLatitudeNE, biasToLongitudeNE)));
+        RectangularBounds locationBias = getBoundsFromMap(options, "locationBias");
+        if (locationBias != null) {
+            autocompleteIntent.setLocationBias(locationBias);
         }
 
-        if (restrictToLatitudeSW != 0 && restrictToLongitudeSW != 0 && restrictToLatitudeNE != 0 && restrictToLongitudeNE != 0) {
-            autocompleteIntent.setLocationRestriction(RectangularBounds.newInstance(
-                new LatLng(restrictToLatitudeSW, restrictToLongitudeSW),
-                new LatLng(restrictToLatitudeNE, restrictToLongitudeNE)));
+        RectangularBounds locationRestriction = getBoundsFromMap(options, "locationRestriction");
+        if (locationRestriction != null) {
+            autocompleteIntent.setLocationRestriction(locationRestriction);
         }
 
-        if (country != null) {
-            autocompleteIntent.setCountry(country);
+        if (options.hasKey("country")) {
+            autocompleteIntent.setCountry(options.getString("country"));
         }
 
-        if (initialQuery != null) {
-            autocompleteIntent.setInitialQuery(initialQuery);
+        if (options.hasKey("initialQuery")) {
+            autocompleteIntent.setInitialQuery(options.getString("initialQuery"));
         }
 
-        autocompleteIntent.setTypeFilter(getFilterType(type));
+        if (options.hasKey("type")) {
+            String type = options.getString("type");
+            if (type != null) {
+                autocompleteIntent.setTypeFilter(getFilterType(type));
+            }
+        }
 
         currentActivity.startActivityForResult(autocompleteIntent.build(this.reactContext.getApplicationContext()), AUTOCOMPLETE_REQUEST_CODE);        
     }
@@ -581,5 +563,23 @@ public class RNGooglePlacesModule extends ReactContextBaseJavaModule implements 
 
     @Override
     public void onNewIntent(Intent intent) {
+    }
+
+    private String getStringFromMap(ReadableMap map, String key) {
+        if (!map.hasKey(key)) return null;
+        String value = map.getString(key);
+        return value.isEmpty() ? null : value;
+    }
+
+    private RectangularBounds getBoundsFromMap(ReadableMap in, String key) {
+        if (!in.hasKey(key)) return null;
+        ReadableMap map = in.getMap(key);
+        if (map == null) return null;
+        if (map.hasKey("latitudeSW") && map.hasKey("longitudeSW") && map.hasKey("latitudeNE") && map.hasKey("longitudeNE")) {
+            LatLng sw = new LatLng(map.getDouble("latitudeSW"), map.getDouble("longitudeSW"));
+            LatLng ne = new LatLng(map.getDouble("latitudeNE"), map.getDouble("longitudeNE"));
+            return RectangularBounds.newInstance(sw, ne);
+        }
+        return null;
     }
 }
