@@ -154,9 +154,6 @@ RCT_EXPORT_METHOD(getCurrentPlace: (NSArray *)fields
                                     resolver: (RCTPromiseResolveBlock)resolve
                                     rejecter: (RCTPromiseRejectBlock)reject)
 {
-    [self.locationManager requestAlwaysAuthorization];
-    
-
     GMSPlaceField selectedFields = [self getSelectedFields:fields isCurrentOrFetchPlace:true];
 
     NSMutableArray *likelyPlacesList = [NSMutableArray array];
