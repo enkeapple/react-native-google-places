@@ -47,9 +47,5 @@ export default {
       ...RNGooglePlaces.placeFieldsDefaults,
       ...placeFields
     ]);
-  },
-
-  getCurrentPlace(placeFields) {
-    return RNGooglePlaces.getCurrentPlace(placeFields || []);
   }
 };
